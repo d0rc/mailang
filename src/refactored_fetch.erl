@@ -23,14 +23,14 @@ pass_header([],_) ->
     erlang:error(unexpected_end);
 pass_header([H|T],Header) ->
     case pass_header_line(H) of
-        {delimiter,Delimiter} -> pass_content_info(T, Delimiter, Header, [], []);
+        {delimiter,Delimiter} -> {delimiter,ok}; %pass_content_info(T, Delimiter, Header, [], []);
         {K,V} -> pass_header(T, [{K,list_to_binary(V)}|Header]);
         false -> pass_header(T,Header)
     end.
 pass_content_info([],_,_,_,_) ->
     erlang:error(unexpected_end);
 pass_content_info([H|T],Delimiter,Header,ContentInfo, CurrentContents) ->
-    io:format("PassContentInfo(~p) : ~p~n", [Delimiter,H]),
+    %io:format("PassContentInfo(~p) : ~p~n", [Delimiter,H]),
     case pass_content_info_line(H) of
         Values when is_list(Values) -> pass_content_info(T, Delimiter, Header, Values++ContentInfo, CurrentContents);
         {attachment, Filename} -> {attachments, RemainingLines, FoundAttachments}=pass_attachment(T, Delimiter, [{filename,Filename}|ContentInfo]), {partial, RemainingLines, CurrentContents, FoundAttachments};
@@ -41,7 +41,7 @@ pass_content_info([H|T],Delimiter,Header,ContentInfo, CurrentContents) ->
 pass_content([],_,_,_,_,_) ->
     erlang:error(unexpected_end);
 pass_content([H|T],Delimiter,Header,ContentInfo,Content, CurrentContents) ->
-    io:format("PassContent : ~p~n", [H]),
+    %io:format("PassContent : ~p~n", [H]),
     case pass_content_line(H, Delimiter) of
         end_message -> {mail,T,{Header,[{ContentInfo,list_to_binary(lists:reverse(Content))}|CurrentContents]}};
         new_format -> pass_content_info(T,Delimiter,Header,[],[{ContentInfo,list_to_binary(lists:reverse(Content))}|CurrentContents]);
@@ -103,14 +103,15 @@ pass_content_info_line(X) ->
 
 pass_content_line("--"++T,Delimiter) ->
     End = Delimiter++"--",
-    io:format("Delimiter Content --> ~p ~n", [T]),
+    %io:format("Delimiter Content --> ~p ~n", [T]),
     case T of
         End -> end_message;
         Delimiter -> new_format;
         NewDelimiter -> new_format
      end;
 pass_content_line(T, _) ->
-    {data, decode_line(T)}.
+    {data, T}.
+    %{data, decode_line(T)}.
 
 pass_attachment(Lines, Delimiter, FileInfo) ->
     pass_attachment(Lines, Delimiter, FileInfo,[],[]).
@@ -123,7 +124,7 @@ pass_attachment([H|T],Delimiter,FileInfo,Attachments) ->
     end.
 
 pass_attachment([H|T], Delimiter, FileInfo, AContent, Attachments) ->
-    io:format("PassAttachment(~p) : ~p~n", [Delimiter,H]),
+    %io:format("PassAttachment(~p) : ~p~n", [Delimiter,H]),
     case pass_attachment_line(H,Delimiter) of
         {data, D} -> pass_attachment(T, Delimiter, FileInfo, [D|AContent], Attachments);
         end_attachment -> RAContent=lists:append(lists:reverse(AContent)), DecodedContent=base64:decode(RAContent), pass_attachment(T, Delimiter, [], [{FileInfo, DecodedContent}|Attachments]);
@@ -133,8 +134,10 @@ pass_attachment([H|T], Delimiter, FileInfo, AContent, Attachments) ->
 pass_attachment_line("--"++T,Delimiter) ->
     End = Delimiter++"--",
     case T of
-        End -> io:format("End of attachments"),end_of_attachments;
-        _ -> io:format("End of attachment"), end_attachment
+        End -> %io:format("End of attachments"),
+            end_of_attachments;
+        _ -> %io:format("End of attachment"), 
+            end_attachment
      end;
 pass_attachment_line(Line, _) ->
     {data, Line}.
