@@ -8,6 +8,9 @@
 start_link(Host, imap) ->
     gen_server:start_link({global, Host}, ?MODULE, [Host, 143], []).
 
+start(Host, imap) ->
+    gen_server:start({global, Host}, ?MODULE, [Host, 143], []).
+
 stop() ->
 	gen_server:call(?MODULE, stop).
 
