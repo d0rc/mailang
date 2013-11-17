@@ -59,9 +59,9 @@ handle_call({fetch, Num}, _From, State) when is_integer(Num) ->
 handle_call({fetch, Num}, _From, State) ->
 	FetchContent = "BODY[]",
 	Output = action(State, string:join(["FETCH", Num, FetchContent], " ")),
-	case Output of
-		{ok, _, ["* NO"++_]} -> Result = false;
-		{ok, _Count, Data} -> Result = Data;
+	Result = case Output of
+		{ok, _, ["* NO"++_]} -> false;
+		{ok, _Count, Data} -> Data;
 		Error -> Error
 	end,
     {reply, Result,State};
