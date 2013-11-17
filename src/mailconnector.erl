@@ -61,7 +61,8 @@ handle_call({fetch, Num}, _From, State) ->
 	Output = action(State, string:join(["FETCH", Num, FetchContent], " ")),
 	case Output of
 		{ok, _, ["* NO"++_]} -> Result = false;
-		{ok, _Count, Data} -> Result = Data
+		{ok, _Count, Data} -> Result = Data;
+		Error -> Error
 	end,
     {reply, Result,State};
 handle_call(_Command, _From, _State) ->
